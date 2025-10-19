@@ -1515,7 +1515,7 @@
         <div class="before"></div>
       </div>
     </div>
-    <audio id="bgm" src="./music/music.mp3" preload="auto" loop></audio>
+    <audio id="bgm" src="./music/music.mp3" preload="auto" loop playsinline webkit-playsinline></audio>
   </div>
   <!-- Lớp phủ hiển thị ảnh quà -->
   <div id="giftOverlay">
@@ -1630,7 +1630,25 @@
         (function () {
           var bgm = document.getElementById('bgm');
           if (bgm) {
-            try { bgm.volume = 0.6; bgm.play().catch(function () { }); } catch (e) { }
+            try { 
+              bgm.volume = 0.6; 
+              // Đảm bảo nhạc được load trước khi play
+              bgm.load();
+              var playPromise = bgm.play();
+              if (playPromise !== undefined) {
+                playPromise.then(function() {
+                  console.log('Nhạc đang phát');
+                }).catch(function(error) {
+                  console.log('Lỗi phát nhạc:', error);
+                  // Thử phát lại sau một chút
+                  setTimeout(function() {
+                    bgm.play().catch(function() {});
+                  }, 100);
+                });
+              }
+            } catch (e) { 
+              console.log('Lỗi:', e);
+            }
           }
         })();
         // Sau 1 giây, ẩn toàn bộ UI trừ hình nền
@@ -1646,6 +1664,7 @@
       box.addEventListener('click', openBox, { passive: true });
       box.addEventListener('pointerdown', openBox, { passive: true });
       box.addEventListener('touchstart', openBox, { passive: true });
+      box.addEventListener('touchend', openBox, { passive: true });
     })();
 
     // Ngăn pinch-zoom, double-tap zoom, wheel zoom trên mobile
